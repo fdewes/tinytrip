@@ -1,2 +1,4 @@
 # tinytrip
-easy to use minimalist web scraper
+
+tinytrip is easy to use, easy to understand text webscraper for downloading 
+single web pages
