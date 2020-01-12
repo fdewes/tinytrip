@@ -8,6 +8,6 @@ tinytrip is an easy to use/modify recursive text webscraper
 
 ## Help
 
-./tinytrip -h
+`./tinytrip -h`
 
 
