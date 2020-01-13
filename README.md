@@ -8,7 +8,8 @@ tinytrip is an easy to use/modify recursive text webscraper
 
 ## Help
 
-`$ ./tinytrip.py -h
+```
+$ ./tinytrip.py -h
 usage: tinytrip.py [-h] [-w WHITELIST [WHITELIST ...]] [-b BLACKLIST [BLACKLIST ...]] [-f FILE_TYPES] [-o OUT_FILE [OUT_FILE ...]] [--version] url
 
 tinytrip - easy to use text web scraper
@@ -26,6 +27,6 @@ optional arguments:
   -o OUT_FILE [OUT_FILE ...]
                         Output file
   --version             show program's version number and exit
-`
+```
 
 
