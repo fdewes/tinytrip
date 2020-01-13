@@ -1,6 +1,6 @@
 # tinytrip
 
-tinytrip is an easy to use/modify recursive text webscraper 
+tinytrip is an easy to use python3 webscraper 
 
 ## Usage
 
