@@ -112,7 +112,7 @@ def crawl(url=None, level=0):
     html_str = str(soup)
 
     file_name = re.sub(r"[:|/|\.|]", "_", url)
-    file_name = re.sub("_+", "_", file_name) + ".html"
+    file_name = re.sub("_+", "_", file_name)
 
     with ZipFile(out_file, 'a', compression=ZIP_DEFLATED) as out_zip:
         out_zip.writestr(file_name, html_str)
@@ -219,7 +219,7 @@ if __name__ == "__main__":
                         action="store", dest="file_types",
                         help="regex for file types to crawl. default: html?$")
 
-    parser.add_argument("-o", default="out.zip", nargs='+',
+    parser.add_argument("-o", default="data/out.zip", nargs='+',
                         action="store", dest="out_file",
                         help="Output file")
 
