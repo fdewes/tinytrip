@@ -4,7 +4,7 @@ tinytrip - an easy to use text/html webscraper
 """
 
 __author__ = "Florian Dewes"
-__version__ = "0.1aleph"
+__version__ = "0.11aleph"
 __license__ = "GPLv3"
 
 from bs4 import BeautifulSoup
@@ -13,11 +13,15 @@ from urllib.error import HTTPError
 from urllib.error import URLError
 import re
 import socket
-import json
+import zlib
 from time import time
 from urllib.parse import urljoin
 import argparse
 from logzero import logger
+from zipfile import ZipFile, ZIP_DEFLATED
+
+def utf8len(s):
+    return len(s.encode('utf-8'))
 
 
 def get_html(url, timeout=10):
@@ -97,15 +101,35 @@ def crawl(url=None, level=0):
     recursive crawl function, which calls itself on all links that come appear
     on current page. filters out non-whitelisted (=unwanted) urls.
     returns a sorted list of urls that have been scraped and
-    saves html as string to a global dictionary with the urls as keys.
+    saves html as string to zip file.
     """
 
-    start_time = time()
+    global bytes_read
+    global page_counter
 
     html = get_html(url)
     soup = soupit(html)
+    html_str = str(soup)
 
-    crawled_html[url] = str(soup)
+    file_name = re.sub(r"[:|/|\.|]", "_", url)
+    file_name = re.sub("_+", "_", file_name) + ".html"
+
+    with ZipFile(out_file, 'a', compression=ZIP_DEFLATED) as out_zip:
+        out_zip.writestr(file_name, html_str)
+
+    crawled_html[url] = 0
+
+    bytes_read += utf8len(html_str)
+    page_counter += 1
+
+    status_msg = "\rScraped {1} pages ({2:1.2f} MiB) in {3:1.2f} secs. {0:70s} Depth: {4:d}".format(
+                url,
+                page_counter,
+                bytes_read / 1024 / 1024,
+                time() - start_time,
+                int(level))
+
+    print(status_msg, end="")
 
     if soup is None:
         return []
@@ -117,9 +141,11 @@ def crawl(url=None, level=0):
     file_whitelist = re.compile("|".join(file_types))
     site_blacklist = re.compile("|".join(url_blacklist))
 
-    links = [l for l in links if site_blacklist.search(l) is None
+    links = [l for l in links if (site_blacklist.search(l) is None
+             or blacklist == [])
              and site_whitelist.search(l) is not None
              and file_whitelist.search(l) is not None]
+
 
     return_links = [url]
 
@@ -132,45 +158,42 @@ def crawl(url=None, level=0):
 
     return_links.sort()
 
-    url_log = "url: {0} (scraped {1} link(s) in {2:1.2f} secs. distance: {3:1d})".format(url,
-                              len(return_links),
-                              time()-start_time,
-                              level-1)
-
-    logger.info(url_log)
-
     return return_links
 
 
 def main(args):
     """
-    making text corpora uncool again
     calls the recursive crawler function and stores the content of the scraped
-    web pages to a single json file (for now. more options to come.)
+    web pages to a single zip file.
     """
 
-    start_time = time()
-
+    global page_counter
+    global start_time
     global crawled_html
+    global blacklist
     global url_blacklist
     global url_whitelist
     global file_types
+    global bytes_read
+    global out_file
 
+    page_counter = 1
+    start_time = time()
     crawled_html = dict()
-    url_blacklist = args.blacklist + [" "]
+    blacklist = args.blacklist
+    url_blacklist = args.blacklist
     url_whitelist = args.whitelist
     file_types = args.file_types
+    bytes_read = 0
+    out_file = args.out_file
+
+    print()
 
     crawled_sites = crawl(url=args.url)
 
-    out_file = re.sub(r"[:|/|\.|]", "_", args.url) + ".json"
-    out_file = re.sub("_+", "_", out_file)
-
-    with open(out_file, "w") as f:
-        json.dump(crawled_html, f)
-
-    logger.info("crawled {0} urls in {1:1.2f} secs.".
-                format(len(crawled_sites), round(time()-start_time, 2)))
+    print()
+    print("crawled {0} urls in {1:1.2f} secs.".
+          format(len(crawled_sites), round(time()-start_time, 2)))
 
 
 if __name__ == "__main__":
@@ -178,24 +201,27 @@ if __name__ == "__main__":
     parse command line arguments
     """
 
-    description = "tinytrip - easy to use sloth web scraper"
-
+    description = "tinytrip - easy to use text web scraper"
 
     parser = (argparse.ArgumentParser(description=description))
 
-    parser.add_argument("url", help="start url")
+    parser.add_argument("url", help="url to retreive links from")
+
+    parser.add_argument("-w", default=[], nargs='+',
+                        action="store", dest="whitelist",
+                        help="(list of) regex(es) that must appear in url")
+
+    parser.add_argument("-b", default=[], nargs='+',
+                        action="store", dest="blacklist",
+                        help="(list of) regex(es) that must not appear in url")
 
     parser.add_argument("-f", default=["html?$"],
                         action="store", dest="file_types",
                         help="regex for file types to crawl. default: html?$")
 
-    parser.add_argument("-w", default=[""], nargs='+', 
-                        action="store", dest="whitelist",
-                        help="(list of) regex(es) that must appear in url to be considered")
-
-    parser.add_argument("-b", default=[], nargs='+',
-                        action="store", dest="blacklist",
-                        help="(list of) regex(es) that must not appear in url to be considered")
+    parser.add_argument("-o", default="data/out.zip", nargs='+',
+                        action="store", dest="out_file",
+                        help="Output file")
 
     parser.add_argument(
         "--version",
