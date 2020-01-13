@@ -219,7 +219,7 @@ if __name__ == "__main__":
                         action="store", dest="file_types",
                         help="regex for file types to crawl. default: html?$")
 
-    parser.add_argument("-o", default="out.zip", nargs='+',
+    parser.add_argument("-o", default="out.zip", 
                         action="store", dest="out_file",
                         help="Output file")
 
