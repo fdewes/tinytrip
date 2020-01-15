@@ -144,6 +144,7 @@ def crawl(url=None, level=0):
     links = [l for l in links if (site_blacklist.search(l) is None
              or blacklist == [])
              and site_whitelist.search(l) is not None
+             and whitelist != [] 
              and file_whitelist.search(l) is not None]
 
 
@@ -171,6 +172,7 @@ def main(args):
     global start_time
     global crawled_html
     global blacklist
+    global whitelist
     global url_blacklist
     global url_whitelist
     global file_types
@@ -181,6 +183,7 @@ def main(args):
     start_time = time()
     crawled_html = dict()
     blacklist = args.blacklist
+    whitelist = args.whitelist
     url_blacklist = args.blacklist
     url_whitelist = args.whitelist
     file_types = args.file_types
